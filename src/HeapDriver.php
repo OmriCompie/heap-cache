@@ -11,15 +11,27 @@ class HeapDriver implements Repository
     private static $savedCache = [];
 
     /**
+     * Determine if an item exists in the cache.
+     *
+     * @param  string  $key
+     * @return bool
+     */
+    public function has($key)
+    {
+        return isset(self::$savedCache[$key]);
+    }
+
+    /**
      * Retrieve an item from the cache by key.
      *
-     * @param  string|array  $key
+     * @param  string  $key
+     * @param  mixed   $default
      * @return mixed
      */
-    public function get($key)
+    public function get($key, $default = null)
     {
         if (!$this->has($key)) {
-            return null;
+            return $default;
         }
 
         if (!$this->validateItem($key)) {
@@ -30,19 +42,17 @@ class HeapDriver implements Repository
     }
 
     /**
-     * Retrieve multiple items from the cache by key.
+     * Retrieve an item from the cache and delete it.
      *
-     * Items not found in the cache will have a null value.
-     *
-     * @param  array  $keys
-     * @return array
+     * @param  string  $key
+     * @param  mixed   $default
+     * @return mixed
      */
-    public function many(array $keys)
+    public function pull($key, $default = null)
     {
-        return array_reduce($keys, function ($carry, $item) {
-            $carry[$item] = $this->get($item);
-            return $carry;
-        });
+        $item = $this->get($key, $default);
+        $this->forget($key);
+        return $item;
     }
 
     /**
@@ -63,19 +73,27 @@ class HeapDriver implements Repository
     }
 
     /**
-     * Store multiple items in the cache for a given number of minutes.
+     * Store an item in the cache if the key does not exist.
      *
-     * @param  array  $values
-     * @param  float|int  $minutes
-     * @return void
+     * @param  string  $key
+     * @param  mixed   $value
+     * @param  \DateTime|float|int  $minutes
+     * @return bool
      */
-    public function putMany(array $values, $minutes)
+    public function add($key, $value, $minutes)
     {
-        foreach ($values as $key => $value) {
-            $this->put($key, $value, $minutes);
+        if ($this->has($key)) {
+            return false;
         }
-    }
 
+        self::$savedCache[$key] = [
+            'minutes' => $minutes,
+            'created_at' => time(),
+            'value' => $value,
+        ];
+
+        return true;
+    }
 
     /**
      * Increment the value of an item in the cache.
@@ -122,6 +140,90 @@ class HeapDriver implements Repository
     }
 
     /**
+     * If the key was found - returns execution, else, will store and execute.
+     *
+     * @param string $key
+     * @param \DateTime|float|int $minutes
+     * @param Closure $callback
+     * @return mixed|null
+     */
+    public function remember($key, $minutes, Closure $callback)
+    {
+        if ($this->has($key)) {
+            return $this->get($key);
+        }
+
+        return tap($callback(), function ($value) use ($key, $minutes) {
+            $this->put($key, $value, $minutes);
+        });
+    }
+
+    /**
+     * Get an item from the cache, or store the default value forever.
+     *
+     * @param  string   $key
+     * @param  \Closure  $callback
+     * @return mixed
+     */
+    public function sear($key, Closure $callback)
+    {
+        return $this->rememberForever($key, $callback);
+    }
+
+    /**
+     * Get an item from the cache, or store the default value forever.
+     *
+     * @param  string   $key
+     * @param  \Closure  $callback
+     * @return mixed
+     */
+    public function rememberForever($key, Closure $callback)
+    {
+        $value = $this->get($key);
+
+        // If the item exists in the cache we will just return this immediately and if
+        // not we will execute the given Closure and cache the result of that for a
+        // given number of minutes so it's available for all subsequent requests.
+        if ($this->has($key)) {
+            return $value;
+        }
+
+        $this->forever($key, $value = $callback());
+
+        return $value;
+    }
+
+    /**
+     * Retrieve multiple items from the cache by key.
+     *
+     * Items not found in the cache will have a null value.
+     *
+     * @param  array  $keys
+     * @return array
+     */
+    public function many(array $keys)
+    {
+        return array_reduce($keys, function ($carry, $item) {
+            $carry[$item] = $this->get($item);
+            return $carry;
+        });
+    }
+
+    /**
+     * Store multiple items in the cache for a given number of minutes.
+     *
+     * @param  array  $values
+     * @param  float|int  $minutes
+     * @return void
+     */
+    public function putMany(array $values, $minutes)
+    {
+        foreach ($values as $key => $value) {
+            $this->put($key, $value, $minutes);
+        }
+    }
+
+    /**
      * Remove an item from the cache.
      *
      * @param  string  $key
@@ -130,6 +232,7 @@ class HeapDriver implements Repository
     public function forget($key)
     {
         unset(self::$savedCache[$key]);
+        return true;
     }
 
     /**
@@ -140,6 +243,7 @@ class HeapDriver implements Repository
     public function flush()
     {
         self::$savedCache = [];
+        return true;
     }
 
     /**
@@ -150,36 +254,6 @@ class HeapDriver implements Repository
     public function getPrefix()
     {
         return Config::get('cache.prefix');
-    }
-
-    /**
-     * Checks if key exists in cache.
-     *
-     * @param $key
-     * @return mixed|null
-     */
-    public static function has($key)
-    {
-        return isset(self::$savedCache[$key]);
-    }
-
-    /**
-     * If the key was found - returns execution, else, will store and execute.
-     *
-     * @param string $key
-     * @param \DateTime|float|int $minutes
-     * @param Closure $callback
-     * @return mixed|null
-     */
-    public function remember($key, $minutes, Closure $callback)
-    {
-        if (! is_null($value = $this->get($key))) {
-            return $value;
-        }
-
-        return tap($callback(), function ($value) use ($key, $minutes) {
-            $this->put($key, $value, $minutes);
-        });
     }
 
     /**
