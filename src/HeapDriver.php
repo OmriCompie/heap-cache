@@ -3,6 +3,8 @@
 namespace Ybaruchel\HeapCache;
 
 use Closure;
+use DateTime;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Contracts\Cache\Repository;
 
@@ -60,13 +62,13 @@ class HeapDriver implements Repository
      *
      * @param  string  $key
      * @param  mixed   $value
-     * @param  float|int  $minutes
+     * @param  \Datetime|float|int  $minutes
      * @return void
      */
     public function put($key, $value, $minutes)
     {
         self::$savedCache[$key] = [
-            'minutes' => $minutes,
+            'minutes' => $this->getMinutes($minutes),
             'created_at' => time(),
             'value' => $value,
         ];
@@ -269,5 +271,20 @@ class HeapDriver implements Repository
             return false;
         }
         return true;
+    }
+
+    /**
+     * Calculate the number of minutes with the given duration.
+     *
+     * @param  \DateTime|float|int  $duration
+     * @return float|int|null
+     */
+    protected function getMinutes($duration)
+    {
+        if ($duration instanceof DateTime) {
+            $duration = Carbon::now()->diffInSeconds(Carbon::instance($duration), false) / 60;
+        }
+
+        return (int) ($duration * 60) > 0 ? $duration : null;
     }
 }
