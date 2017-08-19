@@ -36,11 +36,11 @@ class HeapDriver implements Repository
             return $default;
         }
 
-        if (!$this->validateItem($key)) {
+        if (!$this->validateItem(self::$savedCache[$key])) {
             $this->forget($key);
         }
 
-        return self::$savedCache[$key];
+        return value(self::$savedCache[$key]['value']);
     }
 
     /**
@@ -266,8 +266,8 @@ class HeapDriver implements Repository
      */
     private function validateItem($savedItem)
     {
-        $timeExpired = time() - strtotime($savedItem['created_at']) > $savedItem['minutes'] * 60;
-        if (is_integer($savedItem['minutes']) && $timeExpired) {
+        $timeExpired = ((time() - $savedItem['created_at']) > $savedItem['minutes'] * 60);
+        if(is_integer($savedItem['minutes']) && $timeExpired) {
             return false;
         }
         return true;

@@ -2,30 +2,26 @@
 
 namespace Ybaruchel\HeapCache;
 
+use Illuminate\Foundation\AliasLoader;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\ServiceProvider;
 
 class HeapCacheServiceProvider extends ServiceProvider
 {
-    /**
-     * Bootstrap the application services.
-     *
-     * @return void
-     */
-    public function boot()
-    {
-        Cache::extend('heap-cache', function ($app) {
-            return Cache::repository(new HeapDriver());
-        });
-    }
 
     /**
-     * Register the application services.
+     * Register bindings in the container.
      *
      * @return void
      */
     public function register()
     {
-        //
+        // replace cache manager
+        $this->app->singleton('heapCache', function () {
+            return new HeapDriver();
+        });
+
+        $loader = AliasLoader::getInstance();
+        $loader->alias('HeapCache', HeapFacade::class);
     }
 }
