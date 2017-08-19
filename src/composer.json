@@ -1,0 +1,23 @@
+{
+  "name": "ybaruchel/heap-cache",
+  "description": "Cache runtime data in the heap memory allocated to PHP",
+  "type": "library",
+  "require": {
+    "laravel/laravel": "^5.4",
+
+  },
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "Yohanan Baruchel",
+      "email": "ybaruchel@gmail.com"
+    }
+  ],
+  "extra": {
+    "laravel": {
+      "providers": [
+        "Ybaruchel\\HeapCache\\HeapCacheServiceProvider"
+      ]
+    }
+  }
+}
