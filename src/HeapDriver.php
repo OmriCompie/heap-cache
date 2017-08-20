@@ -256,7 +256,7 @@ class HeapDriver implements Repository
      * @param $savedItem
      * @return null
      */
-    private function validateItem($savedItem)
+    protected function validateItem($savedItem)
     {
         $timeExpired = ((time() - $savedItem['created_at']) > $savedItem['minutes'] * 60);
         if(is_integer($savedItem['minutes']) && $timeExpired) {
