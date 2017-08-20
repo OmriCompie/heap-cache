@@ -15,7 +15,6 @@ class HeapCacheServiceProvider extends ServiceProvider
      */
     public function register()
     {
-        // replace cache manager
         $this->app->singleton('heapCache', function () {
             return new HeapDriver();
         });
