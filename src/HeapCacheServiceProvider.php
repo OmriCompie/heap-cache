@@ -8,7 +8,6 @@ use Illuminate\Support\ServiceProvider;
 
 class HeapCacheServiceProvider extends ServiceProvider
 {
-
     /**
      * Register bindings in the container.
      *
