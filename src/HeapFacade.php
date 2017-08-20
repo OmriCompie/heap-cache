@@ -13,5 +13,4 @@ class HeapFacade extends Facade
      * @return string
      */
     protected static function getFacadeAccessor() { return 'heapCache'; }
-
 }
