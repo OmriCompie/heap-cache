@@ -3,7 +3,7 @@
   "description": "Cache runtime data in the heap memory allocated to PHP",
   "type": "library",
   "require": {
-    "laravel/laravel": "^5.5"
+    "laravel/laravel": "^5.4"
   },
   "license": "MIT",
   "authors": [
