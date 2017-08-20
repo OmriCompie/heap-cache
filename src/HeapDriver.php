@@ -38,6 +38,7 @@ class HeapDriver implements Repository
 
         if (!$this->validateItem(self::$savedCache[$key])) {
             $this->forget($key);
+            return null;
         }
 
         return value(self::$savedCache[$key]['value']);
@@ -259,7 +260,7 @@ class HeapDriver implements Repository
     protected function validateItem($savedItem)
     {
         $timeExpired = ((time() - $savedItem['created_at']) > $savedItem['minutes'] * 60);
-        if(is_integer($savedItem['minutes']) && $timeExpired) {
+        if(!is_string($savedItem['minutes']) && $timeExpired) {
             return false;
         }
         return true;
