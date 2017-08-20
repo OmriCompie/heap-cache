@@ -106,11 +106,7 @@ class HeapDriver implements Repository
      */
     public function increment($key, $value = 1)
     {
-        $item = $this->get($key);
-        if (!$item) {
-            return false;
-        }
-        $this->put($key, $item['value'] + $value, $item['minutes']);
+        throw new \LogicException("Increment operations not supported by this driver.");
     }
 
     /**
@@ -122,11 +118,7 @@ class HeapDriver implements Repository
      */
     public function decrement($key, $value = 1)
     {
-        $item = $this->get($key);
-        if (!$item) {
-            return false;
-        }
-        $this->put($key, $item['value'] - $value, $item['minutes']);
+        throw new \LogicException("Decrement operations not supported by this driver.");
     }
 
     /**
